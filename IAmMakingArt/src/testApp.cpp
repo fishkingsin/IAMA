@@ -1,4 +1,6 @@
 #include "testApp.h"
+static string voices[24] = {"Agnes", "Albert", "Alex", "Bad News", "Bahh", "Bells", "Boing", "Bruce", "Bubbles", "Cellos", "Deranged", "Fred", "Good News", "Hysterical", "Junior", "Kathy", "Pipe Organ", "Princess", "Ralph", "Trinoids", "Vicki", "Victoria", "Whisper", "Zarvox"};
+
 
 //--------------------------------------------------------------
 void testApp::setup() {
@@ -47,13 +49,59 @@ void testApp::setup() {
 //        user.setPointCloudResolution(1);
 //    }
     verdana.loadFont(ofToDataPath("verdana.ttf"), 24);
+    
+    
+    voice = "Cellos";
+    bRandomVoice = false;
+    
+    // load the lyrics from a text file and split them
+    // up in to a vector of strings
+    string lyrics = ofBufferFromFile("lyrics.txt").getText();
+    step = 0;
+    words = ofSplitString(lyrics, "\n");
+    
+    // we are running the systems commands
+    // in a sperate thread so that it does
+    // not block the drawing
+    startThread();
 }
-
+//--------------------------------------------------------------
+void testApp::threadedFunction() {
+    
+    while (isThreadRunning()) {
+        
+        
+        // call the system command say
+        
+#ifdef TARGET_OSX
+        string cmd = "say -v "+voice+" "+words[step]+" ";   // create the command
+        system(cmd.c_str());
+#endif
+#ifdef TARGET_WIN32
+        string cmd = "data\\SayStatic.exe "+words[step];   // create the command
+        cout << cmd << endl;
+        system(cmd.c_str());
+#endif
+        
+        
+        
+        // step to the next word
+        step ++;
+        step %= words.size();
+        
+        // slowdown boy
+        ofSleepMillis(10);
+    }
+}
 //--------------------------------------------------------------
 void testApp::update(){
     ofBackground(0, 0, 0);
     for (int deviceID = 0; deviceID < numDevices; deviceID++){
         openNIDevices[deviceID].update();
+    }
+    
+    if(bRandomVoice) {
+        voice = voices[(int)ofRandom(24)];
     }
 }
 
@@ -90,6 +138,14 @@ void testApp::draw(){
 	ofSetColor(0, 255, 0);
 	string msg = " MILLIS: " + ofToString(ofGetElapsedTimeMillis()) + " FPS: " + ofToString(ofGetFrameRate());
 	verdana.drawString(msg, 20, numDevices * 480 + 26);
+    
+    // center the word on the screen
+    float x = (ofGetWidth() - verdana.stringWidth(words[step])) / 2;
+    float y = ofGetHeight() / 2;
+    
+    // draw the word
+    ofSetColor(255);
+    verdana.drawString(words[step], x, y);
 }
 
 //--------------------------------------------------------------
@@ -110,6 +166,13 @@ void testApp::exit(){
 void testApp::keyPressed(int key){
     int cloudRes = -1;
     switch (key) {
+            case 'r':
+                bRandomVoice = !bRandomVoice;
+            break;
+            
+            case ' ':
+                voice = voices[(int)ofRandom(24)];
+            break;
         case '1':
             cloudRes = 1;
             break;

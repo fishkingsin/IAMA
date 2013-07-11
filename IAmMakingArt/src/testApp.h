@@ -6,7 +6,7 @@
 
 #define MAX_DEVICES 1
 
-class testApp : public ofBaseApp{
+class testApp : public ofBaseApp, public ofThread{
 
 public:
     
@@ -29,6 +29,15 @@ public:
     ofTrueTypeFont verdana;
     
     void userEvent(ofxOpenNIUserEvent & event);
+    
+    
+    void threadedFunction();
+
+    vector <string> words;
+    int step;
+    
+    bool bRandomVoice;
+    string voice;
     
 };
 
